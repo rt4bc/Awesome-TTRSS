@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-$confpath = '/var/www/config.php';
+$confpath = '/var/www/ttrss/config.php';
 
 $config = array();
 

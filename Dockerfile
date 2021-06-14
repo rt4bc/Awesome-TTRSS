@@ -1,18 +1,18 @@
 FROM docker.io/alpine:3 AS builder
 
 # Download ttrss via git
-WORKDIR /var/www
+WORKDIR /var/www/ttrss
 RUN apk add --update tar curl git \
   && rm -rf /var/www/* \
-  && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www
+  && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www/ttrss
 
 # Download plugins
-WORKDIR /var/www/plugins.local
+WORKDIR /var/www/ttrss/plugins.local
 
 ## Fever
-RUN mkdir /var/www/plugins/fever && \
+RUN mkdir /var/www/ttrss/plugins/fever && \
   curl -sL https://github.com/DigitalDJ/tinytinyrss-fever-plugin/archive/master.tar.gz | \
-  tar xzvpf - --strip-components=1 -C /var/www/plugins/fever tinytinyrss-fever-plugin-master
+  tar xzvpf - --strip-components=1 -C /var/www/ttrss/plugins/fever tinytinyrss-fever-plugin-master
 
 ## Mercury Fulltext
 RUN mkdir mercury_fulltext && \
@@ -53,21 +53,21 @@ RUN mkdir wallabag_v2 && \
   tar xzvpf - --strip-components=2 -C wallabag_v2 ttrss-to-wallabag-v2-master/wallabag_v2
 
 # Download themes
-WORKDIR /var/www/themes.local
+WORKDIR /var/www/ttrss/themes.local
 
 ## Feedly
 RUN curl -sL https://github.com/levito/tt-rss-feedly-theme/archive/master.tar.gz | \
   tar xzvpf - --strip-components=1 --wildcards -C . tt-rss-feedly-theme-master/feedly*.css tt-rss-feedly-theme-master/feedly/fonts
 
 ## RSSHub
-RUN curl -sL https://github.com/DIYgod/ttrss-theme-rsshub/archive/master.tar.gz | \
-  tar xzvpf - --strip-components=2 -C . ttrss-theme-rsshub-master/dist/rsshub.css
+# RUN curl -sL #https://github.com/DIYgod/ttrss-theme-rsshub/archive/master.tar.gz | \
+#  tar xzvpf - --strip-components=2 -C . ttrss-theme-rsshub-master/dist/rsshub.css
 
 FROM docker.io/alpine:3
 
-LABEL maintainer="Henry<hi@henry.wang>"
+LABEL maintainer="rt4bc<c2real.cn@gmail.com>"
 
-WORKDIR /var/www
+WORKDIR /var/www/ttrss
 
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 COPY src/wait-for.sh /wait-for.sh
@@ -90,12 +90,12 @@ RUN chmod -x /wait-for.sh && chmod -x /docker-entrypoint.sh && apk add --update 
   ca-certificates && ln -s /usr/bin/php8 /usr/bin/php && rm -rf /var/cache/apk/* \
   # Update libiconv as the default version is too low
   && apk add gnu-libiconv=1.15-r3 --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community/ \
-  && rm -rf /var/www
+  && rm -rf /var/www/ttrss
 
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
 # Copy TTRSS and plugins
-COPY --from=builder /var/www /var/www
+COPY --from=builder /var/www/ttrss /var/www/ttrss
 
 # Install GNU libc (aka glibc) and set C.UTF-8 locale as default.
 # https://github.com/Docker-Hub-frolvlad/docker-alpine-glibc/blob/master/Dockerfile
