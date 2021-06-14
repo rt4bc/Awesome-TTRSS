@@ -1,5 +1,5 @@
 FROM docker.io/alpine:3 AS builder
-
+RUN mkdir /var/www/ttrss
 # Download ttrss via git
 WORKDIR /var/www/ttrss
 RUN apk add --update tar curl git \
