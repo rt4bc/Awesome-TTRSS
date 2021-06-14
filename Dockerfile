@@ -1,10 +1,12 @@
 FROM docker.io/alpine:3 AS builder
-RUN mkdir -p /var/www/ttrss
+
 # Download ttrss via git
-WORKDIR /var/www/ttrss
+WORKDIR /var/www
 RUN apk add --update tar curl git \
-  && rm -rf /var/www/* \
-  && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www/ttrss
+    && rm -rf /var/www/* \
+    && mkdir -p /var/www/ttrss \
+    && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www/ttrss
+
 
 # Download plugins
 WORKDIR /var/www/ttrss/plugins.local
