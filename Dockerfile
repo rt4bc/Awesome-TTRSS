@@ -11,6 +11,11 @@ RUN apk add --update tar curl git \
 # Download plugins
 WORKDIR /var/www/ttrss/plugins.local
 
+## Effective Config
+RUN mkdir prefs_effective_config && \
+  curl -sL https://git.tt-rss.org/fox/ttrss-prefs-effective-config/archive/master.tar.gz | \
+  tar xzvpf - --strip-components=1 -C prefs_effective_config
+
 ## Fever
 RUN mkdir /var/www/ttrss/plugins/fever && \
   curl -sL https://github.com/DigitalDJ/tinytinyrss-fever-plugin/archive/master.tar.gz | \
@@ -67,7 +72,7 @@ RUN curl -sL https://github.com/levito/tt-rss-feedly-theme/archive/master.tar.gz
 
 FROM docker.io/alpine:3
 
-LABEL maintainer="rt4bc<c2real.cn@gmail.com>"
+LABEL maintainer="rt4bc<bochao.me@gmail.com>"
 
 WORKDIR /var/www/ttrss
 
@@ -76,6 +81,11 @@ COPY src/wait-for.sh /wait-for.sh
 COPY src/ttrss.nginx.conf /etc/nginx/nginx.conf
 COPY src/initialize.php /initialize.php
 COPY src/s6/ /etc/s6/
+
+# Fix safari: TypeError: window.requestIdleCallback is not a function
+# https://community.tt-rss.org/t/typeerror-window-requestidlecallback-is-not-a-function/1755/26
+# https://github.com/pladaria/requestidlecallback-polyfill
+COPY src/local-overrides.js  themes.local/local-overrides.js
 
 # Open up ports to bypass ttrss strict port checks, USE WITH CAUTION
 ENV ALLOW_PORTS="80,443"
@@ -86,13 +96,15 @@ ENV DB_PASS ttrss
 
 # Install dependencies
 RUN chmod -x /wait-for.sh && chmod -x /docker-entrypoint.sh && apk add --update --no-cache git nginx s6 curl sudo \
-  php8 php8-intl php8-fpm php8-cli php8-curl php8-fileinfo \
-  php8-mbstring php8-gd php8-json php8-dom php8-pcntl php8-posix \
-  php8-pgsql php8-session php8-pdo php8-pdo_pgsql \
+  php8 php8-fpm php8-pdo php8-pgsql php8-pdo_pgsql \
+  php8-gd php8-mbstring php8-intl php8-xml php8-curl \
+  php8-session php8-tokenizer php8-dom php8-fileinfo \
+  php8-json php8-iconv php8-pcntl php8-posix php8-zip php8-exif \
   ca-certificates && ln -s /usr/bin/php8 /usr/bin/php && rm -rf /var/cache/apk/* \
   # Update libiconv as the default version is too low
-  && apk add gnu-libiconv=1.15-r3 --update --no-cache --repository https://dl-cdn.alpinelinux.org/alpine/edge/community/ \
+  && apk add gnu-libiconv=1.15-r3 --update --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.13/community/ \
   && rm -rf /var/www/ttrss
+
 
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
