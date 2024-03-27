@@ -3,16 +3,18 @@ FROM docker.io/alpine:3 AS builder
 # Download ttrss via git
 WORKDIR /var/www
 RUN apk add --update tar curl git \
-  && rm -rf /var/www/* \
-  && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www
+    && rm -rf /var/www/* \
+    && mkdir -p /var/www/ttrss \
+    && git clone https://git.tt-rss.org/fox/tt-rss --depth=1 /var/www/ttrss
+
 
 # Download plugins
-WORKDIR /var/www/plugins.local
+WORKDIR /var/www/ttrss/plugins.local
 
 ## Fever
-RUN mkdir /var/www/plugins/fever && \
+RUN mkdir /var/www/ttrss/plugins/fever && \
   curl -sL https://github.com/DigitalDJ/tinytinyrss-fever-plugin/archive/master.tar.gz | \
-  tar xzvpf - --strip-components=1 -C /var/www/plugins/fever tinytinyrss-fever-plugin-master
+  tar xzvpf - --strip-components=1 -C /var/www/ttrss/plugins/fever tinytinyrss-fever-plugin-master
 
 ## Mercury Fulltext
 RUN mkdir mercury_fulltext && \
@@ -58,7 +60,7 @@ RUN mkdir auth_oidc && \
   tar xzvpf - --strip-components=1 -C auth_oidc ttrss-auth-oidc-master
 
 # Download themes
-WORKDIR /var/www/themes.local
+WORKDIR /var/www/ttrss/themes.local
 
 # Fix safari: TypeError: window.requestIdleCallback is not a function
 # https://community.tt-rss.org/t/typeerror-window-requestidlecallback-is-not-a-function/1755/26
@@ -70,14 +72,14 @@ RUN curl -sL https://github.com/levito/tt-rss-feedly-theme/archive/master.tar.gz
   tar xzvpf - --strip-components=1 --wildcards -C . tt-rss-feedly-theme-master/feedly*.css tt-rss-feedly-theme-master/feedly/fonts
 
 ## RSSHub
-RUN curl -sL https://github.com/DIYgod/ttrss-theme-rsshub/archive/master.tar.gz | \
-  tar xzvpf - --strip-components=2 -C . ttrss-theme-rsshub-master/dist/rsshub.css
+# RUN curl -sL #https://github.com/DIYgod/ttrss-theme-rsshub/archive/master.tar.gz | \
+#  tar xzvpf - --strip-components=2 -C . ttrss-theme-rsshub-master/dist/rsshub.css
 
 FROM docker.io/alpine:3
 
-LABEL maintainer="Henry<hi@henry.wang>"
+LABEL maintainer="rt4bc<bochao.me@gmail.com>"
 
-WORKDIR /var/www
+WORKDIR /var/www/ttrss
 
 COPY ./docker-entrypoint.sh /docker-entrypoint.sh
 COPY src/wait-for.sh /wait-for.sh
@@ -103,13 +105,12 @@ RUN chmod -x /wait-for.sh && chmod -x /docker-entrypoint.sh && apk add --update 
   # Update libiconv as the default version is too low
   # Do not bump this dependency https://gitlab.alpinelinux.org/alpine/aports/-/issues/12328
   && apk add gnu-libiconv=1.15-r3 --update --no-cache --repository http://dl-cdn.alpinelinux.org/alpine/v3.13/community/ \
-  && rm -rf /var/www \
+  && rm -rf /var/www/ttrss
   && ln -s /usr/bin/php81 /usr/bin/php
-
 ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
 # Copy TTRSS and plugins
-COPY --from=builder /var/www /var/www
+COPY --from=builder /var/www/ttrss /var/www/ttrss
 
 # Install GNU libc (aka glibc) and set C.UTF-8 locale as default.
 # https://github.com/Docker-Hub-frolvlad/docker-alpine-glibc/blob/master/Dockerfile
