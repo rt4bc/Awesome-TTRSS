@@ -1,7 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-$confpath = '/var/www/config.php';
+$confpath = '/var/www/ttrss/config.php';
 
 // For configs, see https://git.tt-rss.org/fox/tt-rss/src/branch/master/classes/Config.php
 
