@@ -8,11 +8,10 @@ git checkout -- /var/www/ttrss/classes/urlhelper.php
 if [ "$ALLOW_PORTS" != "80,443" ]; then
     # open ports in the env
     ALLOW_PORTS="80, 443, $ALLOW_PORTS, ''"
-    sed -i -r "s/(80, 443).*?('')/$ALLOW_PORTS/" /var/www/ttrss/classes/urlhelper.php
-
+    sed -i -r "s/(80, 443).*?('')/$ALLOW_PORTS/" /var/www/ttrss/classes/UrlHelper.php
     # modify BL to include ports
     CODE="if (isset(\$parts['port'])) \$tmp .= ':' . \$parts['port']; \n"
-    sed -i "/if (isset(\$parts\['path'\]))/i $CODE" /var/www/ttrss/classes/urlhelper.php
+    sed -i "/if (isset(\$parts\['path'\]))/i $CODE" /var/www/ttrss/classes/UrlHelper.php
 fi
 
 if [ "$FEED_LOG_QUIET" != "true" ]; then
